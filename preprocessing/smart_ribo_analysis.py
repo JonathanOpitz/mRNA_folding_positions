@@ -1,382 +1,235 @@
 #!/usr/bin/env python3
 """
-FAST Ribosome Profiling - using k-mer hashing
-Extracts only reads matching a specific gene!
+FAST Ribosome Profiling - k-mer based gene-specific read extraction
 
 Usage:
-    python3 fast_ribo_analysis.py <fastq_file> <gene_name>
+    python3 fast_ribo_analysis.py <fastq_file> <gene_name> <reference_seq_file>
 
 Example:
-    python3 fast_ribo_analysis.py SRR10513636.fastq GAPDH
+    python3 fast_ribo_analysis.py SRR10513636.fastq GAPDH GAPDH.fa
 """
 
 import sys
 from collections import Counter, defaultdict
 from Bio.Seq import Seq
 
-# Parameters
 P_SITE_OFFSET = 12
 MIN_LENGTH = 20
 MAX_LENGTH = 32
-KMER_SIZE = 15  # Länge der k-mere für hashing
+KMER_SIZE = 15
 MAX_MISMATCHES = 2
 
-# Adapters
 ADAPTERS = [
     "AGATCGGAAGAGCACACGTCT",
     "AGATCGGAAGAGCGTCGTGTA",
 ]
 
-# Gene sequences
-GENE_SEQUENCES = {
-    'GAPDH': """
-        ATGGGGAAGGTGAAGGTCGGAGTCAACGGATTTGGTCGTATTGGGCGCCTGGTCACC
-        AGGGCTGCTTTTAACTCTGGTAAAGTGGATATTGTTGCCATCAATGACCCCTTCATT
-        GACCTCAACTACATGGTTTACATGTTCCAATATGATTCCACCCATGGCAAATTCCAT
-        GGCACCGTCAAGGCTGAGAACGGGAAGCTTGTCATCAATGGAAATCCCATCACCATC
-        TTCCAGGAGCGAGATCCCTCCAAAATCAAGTGGGGCGATGCTGGCGCTGAGTACGTC
-        GTGGAGTCCACTGGCGTCTTCACCACCATGGAGAAGGCTGGGGCTCATTTGCAGGGG
-        GGAGCCAAAAGGGTCATCATCTCTGCCCCCTCTGCTGATGCCCCCATGTTCGTCATG
-        GGTGTGAACCATGAGAAGTATGACAACAGCCTCAAGATCATCAGCAATGCCTCCTGC
-        ACCACCAACTGCTTAGCACCCCTGGCCAAGGTCATCCATGACAACTTTGGTATCGTG
-        GAAGGACTCATGACCACAGTCCATGCCATCACTGCCACCCAGAAGACTGTGGATGGC
-        CCCTCCGGGAAACTGTGGCGTGATGGCCGCGGGGCTCTCCAGAACATCATCCCTGCC
-        TCTACTGGCGCTGCCAAGGCTGTGGGCAAGGTCATCCCTGAGCTGAACGGGAAGCTC
-        ACTGGCATGGCCTTCCGTGTCCCCACTGCCAACGTGTCAGTGGTGGACCTGACCTGC
-        CGTCTAGAAAAACCTGCCAAATATGATGACATCAAGAAGGTGGTGAAGCAGGCGTCG
-        GAGGGCCCCCTCAAGGGCATCCTGGGCTACACTGAGCACCAGGTGGTCTCCTCTGAC
-        TTCAACAGCGACACCCACTCCTCCACCTTTGACGCTGGGGCTGGCATTGCCCTCAAC
-        GACCACTTTGTCAAGCTCATTTCCTGGTATGACAACGAATTTGGCTACAGCAACAGG
-        GTGGTGGACCTCATGGCCCACATGGCCTCCAAGGAGTAA
-    """,
-    'ACTB': """
-        ATGGATGATGATATCGCCGCGCTCGTCGTCGACAACGGCTCCGGCATGTGCAAGGCC
-        GGCTTCGCGGGCGACGATGCCCCCCGGGCCGTCTTCCCCTCCATCGTGGGGCGCCCC
-        AGGCACCAGGGCGTGATGGTGGGCATGGGTCAGAAGGATTCCTATGTGGGCGACGAG
-        GCCCAGAGCAAGAGAGGCATCCTCACCCTGAAGTACCCCATCGAGCACGGCATCGTC
-        ACCAACTGGGACGACATGGAGAAAATCTGGCACCACACCTTCTACAATGAGCTGCGT
-        GTGGCTCCCGAGGAGCACCCCGTGCTGCTGACCGAGGCCCCCCTGAACCCCAAGGCC
-        AACCGCGAGAAGATGACCCAGATCATGTTTGAGACCTTCAACACCCCAGCCATGTAC
-        GTTGCTATCCAGGCTGTGCTATCCCTGTACGCCTCTGGCCGTACCACTGGCATCGTG
-        ATGGACTCCGGTGACGGGGTCACCCACACTGTGCCCATCTACGAGGGGTATGCCCTG
-        CCCACACACATGCCACACCCAGCCATGTATGTTGCTATCCAGGCTGTGCTATCCCTG
-        TACGCCTCTGGCCGTACCACTGGCATCGTGATGGACTCCGGTGACGGGGTCACCCAC
-        ACTGTGCCCATCTACGAGGGGTATGCCCTGCCCACATAA
-    """,
-    'F9': """
-        ATGCAGCGCGTGAACATGATCATGGCAGAATCAACCAACTTTGTCCTCTGCCTGGTG
-        ATTGCCATTCTCTTGATGGCCAGCTTTACCTTGAAGAAATGGTCAGTCGCCAAGGTG
-        AAGGATGATGAGAGGCTGTGTTGCCTTGAAGGAAGTGGACACCGGAACTACTTTCCT
-        GACCTTATGGAATTTCAAGGACAAGGAGACTCCTGATGGCATCATGTTGACCACCAA
-        CCTGGGCAAGAACTTCATCGGCAGCACCTACGTGACCAGCTTCAAGGAGTGCAACAA
-        GATCCTCAAGGGCTCCTTGAAATGCACCAAGTACCCCTTGTCCAGCTGTGGCTTCAC
-        GGTGTTCAACACCAACTTCTCCGTGGAGCACCGCTTCAAGTTCAAGAACAACAACTT
-        CACCATCCCCGAGCTGGCCTGGGACGTGACGGATGACTTCCGCGTGCTGCACTTCAG
-        CTTGCCGCCCGAGACCTTCTGGGACCAGGTCATCCAGGCCAGCCAGACCATCACCTT
-        CGGACCTGTCACCGCCATCAACGCCTACATCGTGGCCAACCTGCAGTGCAACGGCTG
-        CACCAACCTGTTCAACATCAACTCCCTGGTGCCGGAGGTGTCCCACAACAACATCTT
-        CGTGAAGGGCAACTTCTCCCAGGCCAACTGGACAGTGACGGGCAACACGTGCGAGTA
-        TAGCGGCTACAACGTGCCTTTCTCCCGGAATTATAAGGCTCAGCGCGCCATCCTCGT
-        GCACCGGGGCATGAACTGGACCGGCAACTACGGCTACTTCACCTTCAGCCACAAGAA
-        GTGCAACCGGGGCACCTTCTCCTACAAGACCGGCACGGGCTCCAACTTCACCTACCA
-        GAACGGCATCATCCAGTTTCTGATCAACAAGACCACCGGCAAGCCCTTCACCTTCCA
-        GGTCATGGGCTCCCGGACCCTGTACAGGGTGTCCCTGAACCGCACGGTGTTCACGCT
-        GGGGAACGCCTGCTTCGAGAACAACTGGACCTGCTACGAGACCAACAACACCCCGGA
-        GCTGACAGGCCGAGACAAGAACACCGAGATCTAA
-    """,
-    
-    'F9_CO': """
-        ATGCAGCGGGTCAATATGATCATGGCCGAGTCCACAAACTTCGTGCTGTGCCTGGTG
-        ATCGCCATCCTGCTGATGGCCTCCTTCACCCTGAAGAAGTGGTCCGTGGCCAAGGTG
-        AAGGACGACGAGCGGCTGTGCTGCCTGGAAGGAAGTGGACACAGGCACAACCTTCCT
-        GACCCTGTGGAACTTCAAGGACAAGGAAACACCAGATGGCATCATGCTGACCACAAA
-        CCTGGGCAAGAACTTCATCGGCTCCACATACGTGACATCCTTCAAGGAGTGCAACAA
-        GATCCTGAAGGGCTCCCTGAAGTGCACCAAGTACCCACTGTCCAGCTGCGGATTCAC
-        AGTGTTCAACACCAACTTCTCCGTGGAACACAGATTCAAGTTCAAGAACAACAACTT
-        CACCATCCCAGAACTGGCCTGGGACGTGACAGACGACTTCAGAGTGCTGCACTTCTC
-        CCTGCCACCAGAGACATTCTGGGACCAGGTGATCCAGGCCAGCCAGACCATCACCTT
-        CGGACCAGTGACCGCCATCAACGCCTACATCGTGGCCAACCTGCAGTGCAACGGCTG
-        CACCAACCTGTTCAACATCAACTCCCTGGTGCCAGAGGTGTCCCACAACAACATCTT
-        CGTGAAGGGCAACTTCTCCCAGGCCAACTGGACAGTGACCGGCAACACATGCGAGTA
-        CTCCGGCTACAACGTGCCATTCTCCAGGAACTATAAGGCCCAGAGAGCCATCCTGGT
-        GCACAGGGGCATGAACTGGACAGGCAACTACGGCTACTTCACCTTCTCCCACAAGAA
-        GTGCAACAGGGGCACCTTCTCCTACAAGACAGGCACAGGCTCCAACTTCACCTACCA
-        GAACGGCATCATCCAGTTCCTGATCAACAAGACCACAGGCAAGCCATTCACCTTCCA
-        GGTGATGGGCTCCAGGACCCTGTACAGGGTGTCCCTGAACAGAACAGTGTTCACACT
-        GGGCAACGCCTGCTTCGAGAACAACTGGACCTGCTACGAGACCAACAACACCCCAGA
-        ACTGACAGGCAGAGACAAGAACACCGAGATCTAA
-    """
-}
 
+def load_reference_sequence(ref_path, gene_name):
+    seq_lines = []
+    with open(ref_path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('>'):
+                continue
+            seq_lines.append(line)
 
-def load_gene_sequence(gene_name):
-    """Loads gene sequence"""
-    if gene_name.upper() not in GENE_SEQUENCES:
-        raise ValueError(f"Gene {gene_name} not available")
-    
-    seq = GENE_SEQUENCES[gene_name.upper()]
-    seq = ''.join(seq.split()).upper().replace('U', 'T')
-    
-    print(f"Gene: {gene_name}")
-    print(f"Sequence length: {len(seq)} nt")
-    print(f"Codons: {len(seq)//3}")
-    
+    seq = ''.join(seq_lines).upper().replace('U', 'T')
+
+    if not seq:
+        sys.exit(f"Error: no sequence found in {ref_path}")
+
+    print(f"Reference: {gene_name}")
+    print(f"  File:    {ref_path}")
+    print(f"  Length:  {len(seq)} nt")
+    print(f"  Codons:  {len(seq)//3}\n")
+
     return seq
 
 
-def build_kmer_index(gene_seq, k=KMER_SIZE):
-    """
-    Builds k-mer hash index for fast lookup
-    Returns: dict {kmer: [positions]}
-    """
-    print(f"Building k-mer index (k={k})...")
-    
-    kmer_index = defaultdict(list)
-    
-    # Forward strand
-    for i in range(len(gene_seq) - k + 1):
-        kmer = gene_seq[i:i+k]
-        kmer_index[kmer].append(('forward', i))
-    
-    # Reverse complement strand
-    gene_rc = str(Seq(gene_seq).reverse_complement())
-    for i in range(len(gene_rc) - k + 1):
-        kmer = gene_rc[i:i+k]
-        kmer_index[kmer].append(('reverse', i))
-    
-    print(f"  Index contains {len(kmer_index)} unique k-mers")
-    print(f"  Average {sum(len(v) for v in kmer_index.values())/len(kmer_index):.1f} positions per k-mer")
-    
-    return kmer_index
+def build_kmer_index(seq, k=KMER_SIZE):
+    print(f"Building {k}-mer index...")
+
+    index = defaultdict(list)
+
+    # forward
+    for i in range(len(seq) - k + 1):
+        kmer = seq[i:i+k]
+        index[kmer].append(('f', i))
+
+    # reverse complement
+    rc = str(Seq(seq).reverse_complement())
+    for i in range(len(rc) - k + 1):
+        kmer = rc[i:i+k]
+        index[kmer].append(('r', i))
+
+    print(f"  {len(index)} unique kmers")
+    print(f"  avg {sum(len(v) for v in index.values()) / len(index):.1f} positions per kmer\n")
+    return index
 
 
-def trim_adapter(seq):
-    """Removes Illumina adapter from read"""
+def trim_adapter(read):
     for adapter in ADAPTERS:
-        pos = seq.find(adapter)
+        pos = read.find(adapter)
         if pos != -1:
-            return seq[:pos]
-    return seq
+            return read[:pos]
+    return read
 
 
-def fast_align(read_seq, gene_seq, kmer_index, k=KMER_SIZE):
-    """
-    Fast alignment using k-mer lookup
-    Returns: (position, mismatches, strand) or (None, None, None)
-    """
-    # Extract k-mer from read (use middle k-mer for best accuracy)
-    if len(read_seq) < k:
+def fast_align(read, ref_seq, kmer_index, k=KMER_SIZE):
+    if len(read) < k:
         return None, None, None
-    
-    # Try multiple k-mers from the read
+
     read_kmers = []
-    for offset in [0, len(read_seq)//4, len(read_seq)//2, 3*len(read_seq)//4]:
-        if offset + k <= len(read_seq):
-            read_kmers.append((offset, read_seq[offset:offset+k]))
-    
+    for off in [0, len(read)//4, len(read)//2, 3*len(read)//4]:
+        if off + k <= len(read):
+            read_kmers.append((off, read[off:off+k]))
+
     candidates = []
-    
-    # Search k-mers in index
-    for kmer_offset, kmer in read_kmers:
+    for off, kmer in read_kmers:
         if kmer in kmer_index:
-            for strand, gene_pos in kmer_index[kmer]:
-                # Calculate where read would start
-                read_start = gene_pos - kmer_offset
-                candidates.append((read_start, strand))
-    
+            for strand, pos in kmer_index[kmer]:
+                candidates.append((pos - off, strand))
+
     if not candidates:
         return None, None, None
-    
-    # Verify candidates (full comparison with mismatch check)
+
     best_pos = None
-    best_mismatches = MAX_MISMATCHES + 1
+    best_mm = MAX_MISMATCHES + 1
     best_strand = None
-    
-    for pos, strand in set(candidates):  # unique candidates
-        if strand == 'forward':
-            if pos < 0 or pos + len(read_seq) > len(gene_seq):
+
+    for pos, strand in set(candidates):
+        if strand == 'f':
+            if pos < 0 or pos + len(read) > len(ref_seq):
                 continue
-            gene_window = gene_seq[pos:pos+len(read_seq)]
-            mismatches = sum(1 for a, b in zip(read_seq, gene_window) if a != b)
+            window = ref_seq[pos:pos+len(read)]
+            mm = sum(a != b for a, b in zip(read, window))
         else:
-            # Reverse complement
-            read_rc = str(Seq(read_seq).reverse_complement())
-            if pos < 0 or pos + len(read_rc) > len(gene_seq):
+            read_rc = str(Seq(read).reverse_complement())
+            if pos < 0 or pos + len(read_rc) > len(ref_seq):
                 continue
-            gene_window = gene_seq[pos:pos+len(read_rc)]
-            mismatches = sum(1 for a, b in zip(read_rc, gene_window) if a != b)
-        
-        if mismatches < best_mismatches:
-            best_mismatches = mismatches
+            window = ref_seq[pos:pos+len(read_rc)]
+            mm = sum(a != b for a, b in zip(read_rc, window))
+
+        if mm < best_mm:
+            best_mm = mm
             best_pos = pos
-            best_strand = '+' if strand == 'forward' else '-'
-    
-    if best_mismatches <= MAX_MISMATCHES:
-        return best_pos, best_mismatches, best_strand
-    
+            best_strand = '+' if strand == 'f' else '-'
+
+    if best_mm <= MAX_MISMATCHES:
+        return best_pos, best_mm, best_strand
+
     return None, None, None
 
 
-def process_fastq_fast(fastq_file, gene_seq, kmer_index, gene_name):
-    """Processes FASTQ with fast k-mer alignment"""
-    
-    print(f"\n{'='*70}")
-    print(f"Analyzing FASTQ: {fastq_file}")
-    print(f"{'='*70}\n")
-    
+def process_fastq(fastq_path, ref_seq, kmer_index, gene_name):
+    print(f"Processing: {fastq_path}\n")
+
     codon_counts = Counter()
-    total_reads = 0
-    trimmed_reads = 0
-    length_filtered = 0
-    aligned_reads = 0
-    
-    with open(fastq_file, 'r') as f:
+    total = trimmed = passed_len = aligned = 0
+
+    with open(fastq_path) as f:
         while True:
             header = f.readline()
             if not header:
                 break
-            
             seq = f.readline().strip()
-            plus = f.readline()
-            qual = f.readline()
-            
-            total_reads += 1
-            
-            # Trim adapter
-            seq_trimmed = trim_adapter(seq)
-            if len(seq_trimmed) < len(seq):
-                trimmed_reads += 1
-            
-            # Filter length
-            if len(seq_trimmed) < MIN_LENGTH or len(seq_trimmed) > MAX_LENGTH:
+            f.readline()  # +
+            f.readline()  # qual
+
+            total += 1
+
+            seq = trim_adapter(seq)
+            if len(seq) < len(seq):
+                trimmed += 1
+
+            if not (MIN_LENGTH <= len(seq) <= MAX_LENGTH):
                 continue
-            
-            length_filtered += 1
-            
-            # Fast alignment with k-mer index
-            pos, mismatches, strand = fast_align(seq_trimmed, gene_seq, kmer_index)
-            
+            passed_len += 1
+
+            pos, mm, strand = fast_align(seq, ref_seq, kmer_index)
             if pos is not None:
-                aligned_reads += 1
-                
-                # P-site position
+                aligned += 1
+
                 if strand == '+':
-                    p_site_nt = pos + P_SITE_OFFSET
+                    ppos = pos + P_SITE_OFFSET
                 else:
-                    p_site_nt = pos + len(seq_trimmed) - P_SITE_OFFSET
-                
-                codon_num = p_site_nt // 3
-                
-                if 0 <= codon_num < len(gene_seq)//3:
-                    codon_counts[codon_num] += 1
-            
-            # Progress
-            if total_reads % 100000 == 0:
-                print(f"Processed: {total_reads:,} | Trimmed: {trimmed_reads:,} | "
-                      f"Length OK: {length_filtered:,} | Aligned: {aligned_reads:,}", end='\r')
-    
-    print(f"\n\n{'='*70}")
-    print("STATISTICS")
-    print(f"{'='*70}")
-    print(f"Total reads: {total_reads:,}")
-    print(f"Adapter trimmed: {trimmed_reads:,} ({trimmed_reads/total_reads*100:.2f}%)")
-    print(f"Correct length: {length_filtered:,} ({length_filtered/total_reads*100:.2f}%)")
-    print(f"Aligned to {gene_name}: {aligned_reads:,} ({aligned_reads/total_reads*100:.4f}%)")
-    if length_filtered > 0:
-        print(f"  Alignment rate: {aligned_reads/length_filtered*100:.2f}% of length-filtered")
-    print(f"Unique codons with reads: {len(codon_counts)}")
-    print(f"{'='*70}\n")
-    
+                    ppos = pos + len(seq) - P_SITE_OFFSET
+
+                codon_idx = ppos // 3
+                if 0 <= codon_idx < (len(ref_seq)//3):
+                    codon_counts[codon_idx] += 1
+
+            if total % 100_000 == 0:
+                print(f"{total:,} reads | trim:{trimmed:,} | len-ok:{passed_len:,} | gene:{aligned:,}", end='\r')
+
+    print(f"\n\nStatistics:")
+    print(f"  total reads         : {total:,}")
+    print(f"  adapter trimmed     : {trimmed:,} ({trimmed/total*100:.2f}%)")
+    print(f"  length passed       : {passed_len:,} ({passed_len/total*100:.2f}%)")
+    print(f"  aligned to {gene_name:<10}: {aligned:,} ({aligned/total*100:.4f}%)")
+    if passed_len > 0:
+        print(f"    → of length-passed: {aligned/passed_len*100:.2f}%")
+    print(f"  codons with ≥1 read : {len(codon_counts)}")
+    print("-"*60 + "\n")
+
     return codon_counts
 
 
-def extract_codons(sequence):
-    """Extracts codons from sequence"""
-    codons = []
-    for i in range(0, len(sequence) - len(sequence) % 3, 3):
-        codons.append(sequence[i:i+3])
-    return codons
+def get_codons(seq):
+    return [seq[i:i+3] for i in range(0, len(seq)-len(seq)%3, 3)]
 
 
-def write_output(codon_counts, gene_seq, gene_name, output_file):
-    """Writes CSV output"""
-    
-    print(f"Writing output: {output_file}")
-    
-    codons = extract_codons(gene_seq)
+def save_results(codon_counts, ref_seq, gene_name, outfile):
+    print(f"Writing: {outfile}")
+
+    codons = get_codons(ref_seq)
     total_mapped = sum(codon_counts.values())
-    num_codons = len(codons)
-    mean_count = total_mapped / num_codons if num_codons > 0 else 0
-    
-    with open(output_file, 'w') as f:
-        # Header with better metrics
-        f.write("codon_position,codon,nucleotide_start,nucleotide_end,p_site_count,")
-        f.write("relative_occupancy,density,rpm\n")
-        
+    n_codons = len(codons)
+    mean = total_mapped / n_codons if n_codons > 0 else 0
+
+    with open(outfile, 'w') as f:
+        f.write("codon_pos,codon,nt_start,nt_end,count,rel_occupancy,density,rpm\n")
         for i, codon in enumerate(codons):
-            count = codon_counts.get(i, 0)
-            nt_start = i * 3
-            nt_end = nt_start + 2
-            
-            # Relative occupancy (0.0 - 1.0)
-            rel_occ = count / total_mapped if total_mapped > 0 else 0
-            
-            # Density (normalized to mean, 1.0 = average)
-            density = count / mean_count if mean_count > 0 else 0
-            
-            # RPM (Reads Per Million mapped to this gene)
-            rpm = (count / total_mapped) * 1e6 if total_mapped > 0 else 0
-            
-            f.write(f"{i+1},{codon},{nt_start},{nt_end},{count},")
-            f.write(f"{rel_occ:.6f},{density:.2f},{rpm:.2f}\n")
-    
-    print(f"✓ Output: {output_file}")
-    print(f"  Total codons: {len(codons)}")
-    print(f"  Codons with reads: {len([c for c in codon_counts.values() if c > 0])}")
-    
+            cnt = codon_counts.get(i, 0)
+            start = i * 3
+            rel = cnt / total_mapped if total_mapped > 0 else 0
+            dens = cnt / mean if mean > 0 else 0
+            rpm = (cnt / total_mapped) * 1e6 if total_mapped > 0 else 0
+            f.write(f"{i+1},{codon},{start},{start+2},{cnt},{rel:.6f},{dens:.2f},{rpm:.2f}\n")
+
+    print(f"  codons total     : {n_codons}")
+    print(f"  codons with reads: {sum(1 for v in codon_counts.values() if v > 0)}")
+
     if codon_counts:
-        print(f"\nTop 5 slowest codons:")
-        for codon_num, count in codon_counts.most_common(5):
-            print(f"  Position {codon_num+1}: {codons[codon_num]} → {count} reads")
+        print("\nTop 5 covered codons:")
+        for idx, cnt in codon_counts.most_common(5):
+            print(f"  {idx+1:4d}  {codons[idx]}  {cnt:6d} reads")
 
 
 def main():
-    if len(sys.argv) < 3:
-        print(__doc__)
-        print("\nAvailable genes: GAPDH, ACTB, F9, F9_CO")
+    if len(sys.argv) != 4:
+        print(__doc__.strip())
         sys.exit(1)
-    
-    fastq_file = sys.argv[1]
-    gene_name = sys.argv[2].upper()
-    output_file = f"{gene_name.lower()}_ribosome_counts.csv"
-    
-    print("="*70)
-    print("FAST RIBOSOME PROFILING (k-mer hashing)")
-    print("="*70)
-    print(f"FASTQ: {fastq_file}")
-    print(f"Gene: {gene_name}")
-    print(f"Output: {output_file}")
-    print("="*70)
-    print()
-    
-    # Load gene
-    gene_seq = load_gene_sequence(gene_name)
-    print()
-    
-    # Build k-mer index (one-time, fast!)
-    kmer_index = build_kmer_index(gene_seq)
-    print()
-    
-    # Process FASTQ (much faster now!)
-    codon_counts = process_fastq_fast(fastq_file, gene_seq, kmer_index, gene_name)
-    
-    # Write output
-    print()
-    write_output(codon_counts, gene_seq, gene_name, output_file)
-    
-    print("\n" + "="*70)
-    print("DONE!")
-    print("="*70)
+
+    fastq = sys.argv[1]
+    gene  = sys.argv[2].upper()
+    ref   = sys.argv[3]
+
+    outfile = f"{gene.lower()}_ribosome_counts.csv"
+
+    print(f"Input FASTQ : {fastq}")
+    print(f"Gene        : {gene}")
+    print(f"Reference   : {ref}")
+    print(f"Output      : {outfile}")
+    print("-"*60 + "\n")
+
+    ref_seq = load_reference_sequence(ref, gene)
+    index = build_kmer_index(ref_seq)
+    counts = process_fastq(fastq, ref_seq, index, gene)
+    save_results(counts, ref_seq, gene, outfile)
+
+    print("Done.")
 
 
 if __name__ == '__main__':
