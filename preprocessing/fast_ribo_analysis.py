@@ -13,11 +13,11 @@ import sys
 from collections import Counter, defaultdict
 from Bio.Seq import Seq
 
-P_SITE_OFFSET = 12
-MIN_LENGTH = 20
-MAX_LENGTH = 32
+P_SITE_OFFSET = 13
+MIN_LENGTH = 26
+MAX_LENGTH = 34
 KMER_SIZE = 15
-MAX_MISMATCHES = 2
+MAX_MISMATCHES = 3
 
 ADAPTERS = [
     "AGATCGGAAGAGCACACGTCT",
