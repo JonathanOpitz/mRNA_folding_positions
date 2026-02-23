@@ -97,7 +97,7 @@ GENES = GENES = [
 
 def download_sequence(refseq_id: str) -> str | None:
     """Download CDS sequence from NCBI (nur die Sequenz, ohne Header)"""
-    url = furl = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id={refseq_id}&rettype=fasta&retmode=text"
+    url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id={refseq_id}&rettype=fasta&retmode=text"
     
     try:
         with urllib.request.urlopen(url) as response:
