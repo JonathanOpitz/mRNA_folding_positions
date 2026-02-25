@@ -2,4 +2,5 @@ salmon_index/
 salmon_quant/
 data/
 folding/
+localcolabfold/
 *.DS_Store

@@ -1,0 +1,14 @@
+2026-02-25 17:52:00,013 Running colabfold 1.5.5 (905fdfddf3acb97a86c97e34ccee06882139cc25)
+2026-02-25 17:52:00,025 WARNING: no GPU detected, will be using CPU
+2026-02-25 17:52:00,109 Found 6 citations for tools or databases
+2026-02-25 17:52:00,109 Query 1/1: ALDOA_ENST00000643777.4_ENSG00000149925.22_OTTHUMG00000132107.12_OTTHUMT00000497299.2_ALDOA-219_ALDOA_1486_UTR5_1-189_CDS_190-1284_UTR3_1285-1486__protein_Translated (length 10)
+2026-02-25 17:52:01,969 Setting max_seq=2, max_extra_seq=1
+2026-02-25 17:52:07,074 alphafold2_ptm_model_1_seed_042 recycle=0 pLDDT=66.2 pTM=0.0385
+2026-02-25 17:52:09,191 alphafold2_ptm_model_1_seed_042 recycle=1 pLDDT=66.4 pTM=0.0381 tol=1.03
+2026-02-25 17:52:09,371 alphafold2_ptm_model_1_seed_042 recycle=2 pLDDT=65.3 pTM=0.0382 tol=0.408
+2026-02-25 17:52:09,579 alphafold2_ptm_model_1_seed_042 recycle=3 pLDDT=66.8 pTM=0.0381 tol=0.446
+2026-02-25 17:52:09,579 alphafold2_ptm_model_1_seed_042 took 4.8s (3 recycles)
+2026-02-25 17:52:09,582 reranking models by 'plddt' metric
+2026-02-25 17:52:11,190 Relaxation took 1.6s
+2026-02-25 17:52:11,190 rank_001_alphafold2_ptm_model_1_seed_042 pLDDT=66.8 pTM=0.0381
+2026-02-25 17:52:11,282 Done
