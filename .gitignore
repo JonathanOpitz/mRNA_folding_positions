@@ -3,4 +3,5 @@ salmon_quant/
 data/
 folding/
 localcolabfold/
+predictions/
 *.DS_Store
