@@ -1,7 +1,0 @@
-2026-02-25 17:53:18,601 Running colabfold 1.5.5 (905fdfddf3acb97a86c97e34ccee06882139cc25)
-2026-02-25 17:53:18,616 WARNING: no GPU detected, will be using CPU
-2026-02-25 17:53:18,751 Found 6 citations for tools or databases
-2026-02-25 17:53:18,751 Query 1/1: MDH2_ENST00000432020.2_ENSG00000146701.12_OTTHUMG00000023827.7_OTTHUMT00000344677.1_MDH2-203_MDH2_1548_CDS_1-891_UTR3_892-1548__protein_Translated (length 296)
-2026-02-25 17:53:23,646 Setting max_seq=512, max_extra_seq=5120
-2026-02-25 18:03:03,875 alphafold2_ptm_model_1_seed_042 recycle=0 pLDDT=87.2 pTM=0.834
-2026-02-25 18:12:58,683 alphafold2_ptm_model_1_seed_042 recycle=1 pLDDT=87.8 pTM=0.84 tol=0.864
