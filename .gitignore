@@ -5,3 +5,26 @@ folding/
 localcolabfold/
 predictions/
 *.DS_Store
+
+# RNAplfold temporary output directories
+data/ribo_counts/**/*_plfold_tmp/
+data/ribo_counts_simulated/**/*_plfold_tmp/
+
+# Large binary / model artifacts
+data/**/*.h5
+data/**/*.pkl
+**/*.pt
+**/*.pth
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+Homo_sapiens.GRCh38.cdna.all.fa
+kallisto_quant/
+GEMORNA/
+*.fa
+*.fasta
