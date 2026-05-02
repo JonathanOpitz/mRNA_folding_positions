@@ -26,5 +26,7 @@ __pycache__/
 Homo_sapiens.GRCh38.cdna.all.fa
 kallisto_quant/
 GEMORNA/
+results_natural/
+logs/
 *.fa
 *.fasta
