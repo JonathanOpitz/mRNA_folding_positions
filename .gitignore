@@ -28,5 +28,10 @@ kallisto_quant/
 GEMORNA/
 results_natural/
 logs/
-*.fa
-*.fasta
+data/
+
+score_model/best_model.p
+*.p                     # pickle files
+*.h5
+*.pth
+*.pt
