@@ -51,7 +51,7 @@ VAL_RATIO    = 0.2
 EPOCHS       = 300
 BATCH_SIZE   = 4
 LR           = 5e-4
-PATIENCE     = 8
+PATIENCE     = 10
 HIDDEN       = 32
 HEADS        = 2
 EDGE_DIM     = 6           
@@ -406,7 +406,7 @@ def plot(tl, vl, vp, vt, dn, name):
             ax[1,2].scatter(vt[wt], vp[wt], alpha=0.05, s=2, c='steelblue', label='WT')
             ax[1,2].scatter(vt[dnm], vp[dnm], alpha=0.05, s=2, c='coral', label='de novo')
             ax[1,2].plot([0,1],[0,1],'r--'); ax[1,2].legend(fontsize=8, markerscale=5)
-    plt.tight_layout(); plt.savefig(OUT_DIR / f'gnn_v5_{name}.png', dpi=150); plt.close()
+    plt.tight_layout(); plt.savefig(OUT_DIR / f'gnn_v10_{name}.png', dpi=150); plt.close()
 
 
 # ─── Main ──────────────────────────────────────────────────────────────────────
@@ -419,7 +419,7 @@ def main():
     ec = args.edges
 
     print(f"\n{'═'*60}")
-    print(f"  GNN v5 — Learned codon embeddings + extended context edges")
+    print(f"  GNN v6 — Learned codon embeddings + extended context edges")
     print(f"  Edges: {ec} | Device: {DEVICE}")
     print(f"  Codon embed dim: {CODON_EMBED_DIM} | Seq edges at dist 1,3,5")
     print(f"{'═'*60}\n")
@@ -474,7 +474,7 @@ def main():
             best_vl = vl; pat_ct = 0
             best_vp, best_vt, best_dn = vp, vt, dn
             OUT_DIR.mkdir(parents=True, exist_ok=True)
-            torch.save(model.state_dict(), OUT_DIR / f"gnn_v5_{ec.replace('+','_')}.pt")
+            torch.save(model.state_dict(), OUT_DIR / f"gnn_v10_{ec.replace('+','_')}.pt")
         else:
             pat_ct += 1
 
@@ -488,7 +488,7 @@ def main():
     tag = ec.replace('+', '_')
 
     print(f"\n{'═'*60}")
-    print(f"  RESULTS v5 — {ec}")
+    print(f"  RESULTS v9 — {ec}")
     print(f"{'═'*60}")
     print(f"  MSE:        {m['mse']:.5f}")
     print(f"  MAE:        {m['mae']:.5f}")
