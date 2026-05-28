@@ -49,7 +49,7 @@ from torch_geometric.data import Data
 from torch_geometric.nn import GATv2Conv
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-BASE_MASTER   = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_MASTER   = Path(__file__).resolve().parent
 WT_DATA_DIR   = BASE_MASTER / "data/ribo_counts"
 # PDBs live under data/alphafold_results/<GENE>/ with AlphaFold naming:
 # *_unrelaxed_alphafold2_ptm_model_1_seed_000.pdb (etc.)

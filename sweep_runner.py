@@ -52,8 +52,9 @@ from typing import List, Optional
 # PATHS
 # ═══════════════════════════════════════════════════════════════════════════
 
-BASE_DIR   = Path("/Users/jonathanopitz/Desktop/Master")
-PYTHON_BIN = Path("/Users/jonathanopitz/miniconda3/envs/ribodecode/bin/python3")
+BASE_DIR   = Path(__file__).resolve().parent
+# Override with PYTHON_BIN env var if running inside a custom environment.
+PYTHON_BIN = Path(os.environ.get("PYTHON_BIN", sys.executable))
 SCRIPT     = BASE_DIR / "ribodecode_with_fold_penalty.py"
 GENES_DIR  = BASE_DIR / "data/genes"
 OUT_DIR    = BASE_DIR / "data/optimized"
