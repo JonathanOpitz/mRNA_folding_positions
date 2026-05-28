@@ -86,17 +86,17 @@ def check_utr_presence(header: str, seq: str) -> dict:
 
         if utr5_len < MIN_UTR5_NT:
             return {"ok": False,
-                    "reason": (f"Kein/zu kurzes 5'UTR ({utr5_len} nt) — "
-                               f"CDS beginnt bei Position {cds_start + 1}")}
+                    "reason": (f"Missing/short 5'UTR ({utr5_len} nt) — "
+                               f"CDS starts at position {cds_start + 1}")}
         if utr3_len < MIN_UTR3_NT:
             return {"ok": False,
-                    "reason": (f"Kein/zu kurzes 3'UTR ({utr3_len} nt) — "
-                               f"CDS endet bei Position {cds_end}")}
+                    "reason": (f"Missing/short 3'UTR ({utr3_len} nt) — "
+                               f"CDS ends at position {cds_end}")}
         return {"ok": True, "utr5_len": utr5_len, "utr3_len": utr3_len}
 
     # ── Case 3: no header info — reject ──────────────────────────────────────
     return {"ok": False,
-            "reason": "Kein CDS/UTR-Header — UTR-Präsenz nicht bestimmbar"}
+            "reason": "No CDS/UTR header — UTR presence cannot be determined"}
 
 
 # ─── CDS length from GENCODE header ──────────────────────────────────────────
@@ -136,7 +136,7 @@ def check_cds_for_stops(header: str, seq: str) -> dict:
     else:
         atg_pos = seq_up.find("ATG")
         if atg_pos == -1:
-            return {"clean": False, "reason": "Kein ATG gefunden",
+            return {"clean": False, "reason": "No ATG found",
                     "protein_length": 0, "internal_stops": [], "has_terminal": False}
         cds_start = atg_pos
         from_atg  = seq_up[atg_pos:]
@@ -152,7 +152,7 @@ def check_cds_for_stops(header: str, seq: str) -> dict:
     first_stop = prot_full.find('*')
 
     if first_stop == -1:
-        return {"clean": False, "reason": "Kein terminaler Stop gefunden",
+        return {"clean": False, "reason": "No terminal stop codon found",
                 "protein_length": len(prot_full), "internal_stops": [],
                 "has_terminal": False, "cds_source": source}
 
@@ -176,7 +176,7 @@ def check_cds_for_stops(header: str, seq: str) -> dict:
 
     if not has_terminal:
         return {"clean": False,
-                "reason": f"Kein valider terminaler Stop (gefunden: '{term_codon}')",
+                "reason": f"Invalid terminal stop codon (found: '{term_codon}')",
                 "protein_length": prot_len, "internal_stops": [],
                 "has_terminal": False, "cds_source": source}
 
@@ -314,7 +314,7 @@ def select_best_isoforms(
     df = pd.read_csv(kallisto_file, sep='\t')
     results = {}
 
-    print(f"\n{'Gen':<12} {'Status':<10} {'Best Isoform':<26} "
+    print(f"\n{'Gene':<12} {'Status':<10} {'Best Isoform':<26} "
           f"{'Prot AA':>8} {'5UTR':>6} {'3UTR':>6} {'TPM':>10}  {'%TPM':>6}")
     print("─" * 84)
 

@@ -101,24 +101,24 @@ def find_scores_file(gene_dir: Path) -> Path | None:
 
 def find_best_fasta(genes_dir: Path, gene: str, enst_base: str) -> Path | None:
     """
-    Sucht FASTA-Datei mit Priorität:
-      1. Exakter Match ohne Version: GENE_ENST0000XXXX.fasta     ← GENCODE
-      2. Match mit Version:          GENE_ENST0000XXXX.8.fasta   ← Ensembl
-      3. Beliebiger Match:           GENE_ENST0000XXXX*.fasta
- 
-    GENCODE-Dateien haben CDS:-Koordinaten im Header → bevorzugen.
+    Locate the best FASTA file for a gene, in priority order:
+      1. Exact match (no version suffix):  GENE_ENST0000XXXX.fasta   (GENCODE)
+      2. With version suffix:              GENE_ENST0000XXXX.8.fasta  (Ensembl REST)
+      3. Any match:                        GENE_ENST0000XXXX*.fasta
+
+    GENCODE files carry CDS: coordinates in the header — preferred.
     """
-    # Priorität 1: exakter Match (GENCODE)
+    # Priority 1: exact match (GENCODE)
     exact = genes_dir / f"{gene}_{enst_base}.fasta"
     if exact.exists():
         return exact
- 
-    # Priorität 2: mit Versionssuffix (Ensembl REST)
+
+    # Priority 2: with version suffix (Ensembl REST)
     versioned = sorted(genes_dir.glob(f"{gene}_{enst_base}.*.fasta"))
     if versioned:
         return versioned[0]
- 
-    # Priorität 3: alles was passt
+
+    # Priority 3: any match
     any_match = sorted(genes_dir.glob(f"{gene}_{enst_base}*.fasta"))
     if any_match:
         return any_match[0]

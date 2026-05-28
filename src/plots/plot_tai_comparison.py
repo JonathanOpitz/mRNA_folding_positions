@@ -2,7 +2,7 @@
 """
 plot_tai_comparison_ACTB_CTSB.py
 
-Zwei-Panel Vergleich: TAI Profile (γ=0.0 vs γ=0.5) für ACTB und CTSB.
+Two-panel comparison: TAI profiles (γ=0.0 vs γ=0.5) for ACTB and CTSB.
 """
 
 from pathlib import Path
@@ -97,15 +97,15 @@ for ax, (gene, d) in zip(axes, data.items()):
     ax.set_xlim(0, n)
     ax.tick_params(axis='both', which='major', labelsize=FONT_BASE)
     
-    # Individuelle Legende unter jedem Plot
-    ax.legend(loc='upper center', 
-              bbox_to_anchor=(0.5, -0.18),   # nah am Plot
+    # Per-panel legend below each subplot
+    ax.legend(loc='upper center',
+              bbox_to_anchor=(0.5, -0.18),
               fontsize=FONT_BASE - 1,
               ncol=2,
               frameon=True,
               edgecolor='black')
 
-# Abstände
+# Subplot spacing
 plt.subplots_adjust(hspace=0.65, bottom=0.12, top=0.90)
 
 axes[-1].set_xlabel("Codon position", fontsize=FONT_LABEL)

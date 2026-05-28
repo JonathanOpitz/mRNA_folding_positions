@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Add structural features (AlphaFold / ColabFold) to de novo / simulated ribosome count CSVs.
-Proteine sind identisch mit wildtype → Strukturen werden wiederverwendet.
-MRNA-Sequenz ist anders → CDS-Koordinaten werden direkt aus der simulated CSV extrahiert.
+Proteins are identical to wildtype — AlphaFold structures are reused.
+The mRNA sequence differs — CDS coordinates are read directly from the simulated CSV.
 """
 
 import json
@@ -34,7 +34,7 @@ CONTACT_WINDOW    = 10
 
 HBOND_ENERGY_CUTOFF = -0.5   # kcal/mol (Kabsch & Sander 1983)
 
-# ─── HELPER FUNCTIONS (alle aus dem Original-Script übernommen) ──────────────
+# ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────
 
 def _aa(p) -> int | None:
     if p is None:
@@ -413,7 +413,7 @@ def get_cds_coords_from_simulated_csv(csv_path: Path) -> tuple[int, int]:
 
     cds_df = df[df['region'].astype(str).str.strip().str.upper() == 'CDS'].copy()
     if cds_df.empty:
-        raise ValueError(f"Keine CDS-Zeilen in {csv_path.name}")
+        raise ValueError(f"No CDS rows in {csv_path.name}")
 
     nt_starts = pd.to_numeric(cds_df['nt_start'], errors='coerce')
     cds_start = int(nt_starts.min())
@@ -424,7 +424,7 @@ def get_cds_coords_from_simulated_csv(csv_path: Path) -> tuple[int, int]:
     return cds_start, cds_end
 
 
-# ─── FEATURE-PIPELINE FÜR EINE DATEI ─────────────────────────────────────────
+# ─── FEATURE PIPELINE FOR ONE FILE ───────────────────────────────────────────
 def process_simulated_file(csv_path: Path, isoforms: dict) -> bool:
     stem = csv_path.stem
     out_path = csv_path.with_name(f"{stem}_with_structure.csv")
@@ -450,14 +450,14 @@ def process_simulated_file(csv_path: Path, isoforms: dict) -> bool:
         print(f"  [CDS] Fehler: {e}")
         return False
 
-    # AlphaFold-Struktur wiederverwenden
+    # Reuse wildtype AlphaFold structure (protein sequence is unchanged)
     gene_dir = AF_OUT_DIR / gene
     struct_file = find_struct_file(gene_dir)
     if not struct_file:
-        print(f"  [AF] Keine Struktur für {gene} gefunden (zuerst wildtype-Script ausführen!)")
+        print(f"  [AF] No structure for {gene} — run the wildtype script first.")
         return False
 
-    print(f"  [AF] Wiederverwende → {struct_file.name}")
+    print(f"  [AF] Reusing → {struct_file.name}")
 
     features = parse_plddt_and_ss(struct_file)
     if not features:
@@ -491,7 +491,7 @@ def process_simulated_file(csv_path: Path, isoforms: dict) -> bool:
 
     df['_aa_pos'] = df.apply(codon_to_aa_pos, axis=1)
 
-    # Struktur-Features hinzufügen (exakt wie im Original)
+    # Add structural features (same logic as the wildtype pipeline)
     df['plddt'] = df['_aa_pos'].apply(
         lambda p: features[_aa(p)]['plddt']
         if (_aa(p) is not None and _aa(p) in features) else np.nan
@@ -540,13 +540,13 @@ def process_simulated_file(csv_path: Path, isoforms: dict) -> bool:
 def main():
     SIMULATED_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Isoform-Info für InterPro
+    # Load isoform info for InterPro domain lookups
     if ISOFORM_JSON.is_file():
         with open(ISOFORM_JSON) as f:
             isoforms = json.load(f)
     else:
         isoforms = {}
-        print(f"[WARN] {ISOFORM_JSON} nicht gefunden → InterPro deaktiviert")
+        print(f"[WARN] {ISOFORM_JSON} not found — InterPro disabled")
 
     csv_files = sorted(SIMULATED_DIR.glob("*_simulated_ribo.csv"))
     print(f"→ {len(csv_files)} simulated Dateien gefunden\n")
@@ -557,8 +557,8 @@ def main():
             success += 1
 
     print(f"\n{'═'*70}")
-    print(f"Fertig! {success}/{len(csv_files)} Dateien mit Struktur-Features angereichert.")
-    print(f"Ergebnisse liegen als *_with_structure.csv im Ordner:")
+    print(f"Done! {success}/{len(csv_files)} files enriched with structural features.")
+    print(f"Results written as *_with_structure.csv to:")
     print(f"   {SIMULATED_DIR}")
 
 

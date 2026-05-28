@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Filtert cDNA-Sequenzen aus der großen Ensembl-FASTA nur für eine Liste von Gen-Symbolen.
-Speichert pro Gen + Transkript eine eigene .fasta-Datei.
+Filter cDNA sequences from the Ensembl FASTA for a list of gene symbols.
+Writes one .fasta file per gene + transcript.
 """
 
 import logging
@@ -13,7 +13,7 @@ import gzip
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger(__name__)
 
-# Deine Gene (kopiere deine Liste hier rein)
+# Target genes — edit this list before running
 GENES = [
     "BRCA1", "MTOR", "JAK2", "INS", "EPO", "IFNB1", "IL2", "GH1", "F8", "PROC",
     "HBB", "APOA1", "TTR", "VEGFA", "TGFB1", "FGA",]
@@ -30,8 +30,7 @@ GENES = [
     #"NCL", "RPLP0"]
 
 
-# Groß-/Kleinschreibung egal machen
-GENES_SET = {g.upper() for g in GENES}
+GENES_SET = {g.upper() for g in GENES}  # case-insensitive matching
 
 def parse_header(header: str) -> tuple[str, str, str]:
     """Extract gene_symbol, transcript_id, and full description from an Ensembl FASTA header."""
@@ -47,8 +46,8 @@ def parse_header(header: str) -> tuple[str, str, str]:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("fasta_file", help="Pfad zur entpackten cdna.all.fa Datei")
-    parser.add_argument("--output-dir", default="data/genes", help="Ausgabe-Ordner")
+    parser.add_argument("fasta_file", help="Path to the unzipped Ensembl cdna.all.fa file")
+    parser.add_argument("--output-dir", default="data/genes", help="Output directory")
     args = parser.parse_args()
 
     fasta_path = Path(args.fasta_file)
@@ -66,7 +65,7 @@ def main():
         for line in f:
             line = line.rstrip("\n")
             if line.startswith(">"):
-                # Neuen Eintrag verarbeiten
+                # Flush the previous entry
                 if current_gene and current_gene.upper() in GENES_SET:
                     seq = "".join(current_seq)
                     if len(seq) > 20:

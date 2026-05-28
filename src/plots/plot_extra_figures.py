@@ -75,7 +75,7 @@ def delta_rho(df, low_col, high_col):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# FIGURE 1: Dose-response (unverändert)
+# FIGURE 1: Dose-response
 # ═══════════════════════════════════════════════════════════════════════════════
 print("\nBuilding dose_response.png ...")
 
@@ -216,7 +216,7 @@ else:
 
 plot_panel(axes[1], df_05, "0.5")
 
-# Legende manuell -> immer alle drei Kategorien, horizontal
+# Manual legend — always show all three categories, horizontal
 legend_handles = [
     Line2D([0], [0], marker='o', linestyle='none', label=cat,
            markerfacecolor=color, markeredgecolor='black', markersize=11)
@@ -233,7 +233,7 @@ fig.legend(legend_handles, list(CAT_COLORS.keys()),
 fig.suptitle("Effect size vs. contact density per gene",
              fontsize=FONT_SUPTITLE, y=0.98)
 
-# Platz lassen: unten fuer Legende, oben fuer suptitle
+# Reserve space: bottom for legend, top for suptitle
 fig.tight_layout(rect=[0, 0.07, 1, 0.94])
 
 out_path = OUT_DIR / "effect_vs_density.png"

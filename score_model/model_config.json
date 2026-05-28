@@ -1,0 +1,39 @@
+{
+    "training": {
+        "model_description": "CDS",
+        "model_file": "",
+        "data_file": "",
+        "epochs": 20,
+        "train_batch_size": 100,
+        "test_batch_size": 100,
+        "num_workers": 10,
+        "hyper_use": "combined_model",
+        "permutation": false,
+        "training": true,
+        "stored_dir": "./result/314_15_34_46_rpf_predictor"
+    },
+    "combined_model": {
+        "dense4": 512,
+        "dense5": 128,
+        "dense6": 32,
+        "cds_dense": 64,
+        "dilation1": 1,
+        "dilation3": 4,
+        "dropout1": 0.5,
+        "dropout3": 0.9,
+        "dropout4": 0.025,
+        "dropout5": 0.025,
+        "dropout6": 0.025,
+        "kernel_size1": 5,
+        "kernel_size3": 30,
+        "filters1": 256,
+        "filters3": 64,
+        "filters_stride1": 3,
+        "filters_stride3": 1,
+        "pool_size1": 3,
+        "pool_size3": 3,
+        "stride1": 1,
+        "stride3": 1,
+        "lr": 0.001
+    }
+}

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Prüft für alle Gene ob Stop-Codons in der CDS vorkommen.
-Strategie: Erstes ATG finden → translate(to_stop=True) → das ist die echte CDS.
-Alles nach dem ersten Stop ist 3'UTR und wird ignoriert.
+Check all genes for stop codons within the CDS.
+Strategy: find the first ATG → translate(to_stop=True) → that is the true CDS.
+Everything after the first stop is treated as 3'UTR and ignored.
 """
 
 from pathlib import Path
@@ -33,8 +33,8 @@ GENES = [
 
 def gene_matches(description: str, gene: str) -> bool:
     """
-    Prüft ob ein Gen-Symbol im FASTA-Header vorkommt.
-    Matcht nur auf ganzen Wörtern, z.B. 'LDHA' matcht nicht auf 'LDHB'.
+    Check whether a gene symbol appears in the FASTA header.
+    Only matches whole words, e.g. 'LDHA' does not match 'LDHB'.
     """
     desc = description.upper()
     gene = gene.upper()
@@ -51,18 +51,18 @@ def extract_protein(seq: str) -> dict:
     if atg_pos == -1:
         return {"status": "NO_ATG", "protein": None, "protein_length": 0, "atg_position": None}
 
-    # Trim auf Vielfaches von 3 ab ATG
+    # Trim to a multiple of 3 starting from ATG
     from_atg = seq[atg_pos:]
     from_atg = from_atg[:len(from_atg) // 3 * 3]
 
-    # OHNE to_stop → volles Protein inkl. aller '*'
+    # Without to_stop — full protein including all '*'
     protein_full = str(Seq(from_atg).translate())
 
-    # Ersten Stop finden → das ist das Ende der CDS
+    # Find the first stop — that marks the end of the CDS
     first_stop_idx = protein_full.find('*')
 
     if first_stop_idx == -1:
-        # Kein Stop-Codon gefunden (kein terminaler Stop → Problem)
+        # No stop codon found — missing terminal stop is a problem
         return {
             "status": "PROBLEM",
             "atg_position": atg_pos + 1,
@@ -71,7 +71,7 @@ def extract_protein(seq: str) -> dict:
             "has_terminal_stop": False,
             "has_internal_stop": False,
             "internal_stop_positions": [],
-            "note": "Kein Stop-Codon gefunden",
+            "note": "No stop codon found",
             "protein": protein_full,
         }
 
@@ -82,14 +82,12 @@ def extract_protein(seq: str) -> dict:
     terminal_stop_nt_pos = atg_pos + first_stop_idx * 3
     terminal_stop_codon = seq[terminal_stop_nt_pos:terminal_stop_nt_pos + 3]
 
-    # ECHTER CHECK: Gibt es '*' INNERHALB der CDS (vor dem ersten Stop)?
-    # → Nach Definition des ersten Stop unmöglich, ABER:
-    # Wir prüfen ob der erste ATG wirklich der richtige Start ist,
-    # indem wir schauen ob das Protein plausibel lang ist (>50 AA)
-    # und ob nach dem terminalen Stop noch weitere Stops in 3'UTR kommen (normal).
+    # Check for '*' within the CDS (before the first stop). By definition of the
+    # first stop this cannot happen, but a very early stop (<50 AA) suggests the
+    # first ATG is not the true start codon.
     internal_stops = [i for i, aa in enumerate(protein_full[:first_stop_idx]) if aa == '*']
 
-    # Zusätzlich: prüfe ob Stop SEHR früh kommt (< 50 AA → wahrscheinlich falsches ATG)
+    # Flag suspiciously early stops — likely a wrong start ATG
     suspiciously_short = first_stop_idx < 50
 
     status = "OK"
@@ -115,13 +113,13 @@ def extract_protein(seq: str) -> dict:
 
 def main():
     if not MANE_FILE.is_file():
-        print(f"ERROR: MANE-Datei nicht gefunden:\n  {MANE_FILE}")
+        print(f"ERROR: MANE file not found:\n  {MANE_FILE}")
         return
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ── Alle relevanten Einträge aus der MANE-Datei lesen ──
-    print(f"Lese {MANE_FILE.name} ...")
+    # ── Read all relevant entries from the MANE file ──
+    print(f"Reading {MANE_FILE.name} ...")
     gene_records: dict[str, list] = {g: [] for g in GENES}
 
     for record in SeqIO.parse(MANE_FILE, "fasta"):
@@ -129,13 +127,13 @@ def main():
             if gene_matches(record.description, gene):
                 gene_records[gene].append(record)
 
-    # ── Analyse ──
+    # ── Analysis ──
     results = {}
     clean_genes = []
     problem_genes = []
     not_found_genes = []
 
-    print(f"\n{'Gen':<12} {'Accession':<16} {'ATG':<8} {'Protein AA':<12} {'Term.Stop':<12} {'Status'}")
+    print(f"\n{'Gene':<12} {'Accession':<16} {'ATG':<8} {'Protein AA':<12} {'Term.Stop':<12} {'Status'}")
     print("─" * 72)
 
     for gene in GENES:
@@ -144,10 +142,10 @@ def main():
         if not records:
             not_found_genes.append(gene)
             results[gene] = {"status": "NOT_FOUND"}
-            print(f"{gene:<12} {'–':<16} {'–':<8} {'–':<12} {'–':<12} ❓ nicht gefunden")
+            print(f"{gene:<12} {'–':<16} {'–':<8} {'–':<12} {'–':<12} ❓ not found")
             continue
 
-        # Wenn mehrere Treffer: ersten nehmen (MANE Select bevorzugt NM_)
+        # Multiple hits: prefer NM_ accessions (MANE Select)
         record = next((r for r in records if r.id.startswith("NM_")), records[0])
         result = extract_protein(str(record.seq))
         result["accession"] = record.id
@@ -160,7 +158,7 @@ def main():
 
         if result["status"] == "OK":
             clean_genes.append(gene)
-            # FASTA für AlphaFold speichern
+            # Save FASTA for AlphaFold
             fasta_out = OUTPUT_DIR / f"{gene}_alphafold.fasta"
             fasta_out.write_text(
                 f">{gene} | {record.id} | AlphaFold-ready | {result['protein_length']} AA\n"
@@ -169,29 +167,29 @@ def main():
         else:
             problem_genes.append(gene)
 
-    # ── Zusammenfassung ──
+    # ── Summary ──
     print("\n" + "═" * 72)
-    print(f"GESAMT:          {len(GENES)} Gene")
+    print(f"TOTAL:           {len(GENES)} genes")
     print(f"✅ Clean:        {len(clean_genes)}")
-    print(f"❌ Probleme:     {len(problem_genes)}")
-    print(f"❓ Nicht gefunden: {len(not_found_genes)}")
+    print(f"❌ Problems:     {len(problem_genes)}")
+    print(f"❓ Not found:    {len(not_found_genes)}")
 
     if problem_genes:
-        print(f"\nProblem-Gene: {', '.join(problem_genes)}")
+        print(f"\nProblem genes: {', '.join(problem_genes)}")
 
     if not_found_genes:
-        print(f"Nicht gefunden: {', '.join(not_found_genes)}")
+        print(f"Not found: {', '.join(not_found_genes)}")
 
     if clean_genes:
-        print(f"\n✅ AlphaFold FASTA-Dateien gespeichert in:\n   {OUTPUT_DIR}")
+        print(f"\n✅ AlphaFold FASTA files saved to:\n   {OUTPUT_DIR}")
 
-    # ── JSON speichern (ohne Protein-Sequenzen für Übersicht) ──
+    # ── Save JSON (excluding protein sequences for readability) ──
     json_out_data = {
         g: {k: v for k, v in d.items() if k != "protein"}
         for g, d in results.items()
     }
     JSON_OUT.write_text(json.dumps(json_out_data, indent=2))
-    print(f"\nJSON-Report: {JSON_OUT}")
+    print(f"\nJSON report: {JSON_OUT}")
 
 
 if __name__ == "__main__":

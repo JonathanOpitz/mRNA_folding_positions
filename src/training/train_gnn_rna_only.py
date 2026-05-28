@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 """
-GNN Training - RNA-only Graph (final stable version)
-- Exakt deine gewünschte Architektur mit 2 Heads
-- Korrekte Residual Connections
-- Stabilisiertes Training (LR + Scheduler ohne 'verbose')
+GNN Training — RNA-only graph (final stable version)
+- 2-head architecture with residual connections
+- Stabilised training (LR scheduler without 'verbose')
 """
 
 import torch
