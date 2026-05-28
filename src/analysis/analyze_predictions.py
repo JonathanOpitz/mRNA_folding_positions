@@ -20,7 +20,7 @@ import torch
 from scipy import stats
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-BASE_DIR = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data/ribo_counts"
 OUT_DIR  = BASE_DIR / "data/results"
 

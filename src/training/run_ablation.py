@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 CONFIGS = ['seq+prot+rna', 'seq+prot', 'seq+rna']
-OUT = Path("/Users/jonathanopitz/Desktop/Master/data/results")
+OUT = Path(__file__).resolve().parents[2] / "data/results"
 
 for i, c in enumerate(CONFIGS, 1):
     print(f"\n{'═'*60}")

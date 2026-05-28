@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger(__name__)
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
-BASE_DIR      = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR      = Path(__file__).resolve().parents[2]
 SIMULATED_DIR = BASE_DIR / "data/ribo_counts_simulated"
 OUT_SUFFIX    = "_with_rnaplfold.csv"
 

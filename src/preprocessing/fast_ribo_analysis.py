@@ -40,7 +40,7 @@ ADAPTERS = [
     "AGATCGGAAGAGCGTCGTGTA",
 ]
 
-ISOFORM_JSON = Path("/Users/jonathanopitz/Desktop/Master/isoform_selection.json")
+ISOFORM_JSON = Path(__file__).resolve().parents[2] / "isoform_selection.json"
 
 
 # ─── CDS boundary detection ───────────────────────────────────────────────────

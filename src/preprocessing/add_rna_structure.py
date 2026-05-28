@@ -29,7 +29,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger(__name__)
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
-BASE_DIR     = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR     = Path(__file__).resolve().parents[2]
 RESULTS_DIR  = BASE_DIR / "data/ribo_counts"
 GENES_DIR    = BASE_DIR / "data/genes"
 ISOFORM_JSON = BASE_DIR / "isoform_selection.json"

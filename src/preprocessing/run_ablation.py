@@ -5,7 +5,7 @@ import subprocess, json, sys
 from pathlib import Path
 
 CONFIGS = ['none', 'seq', 'seq+prot', 'seq+rna', 'seq+prot+rna']
-OUT = Path("/Users/jonathanopitz/Desktop/Master/data/results")
+OUT = Path(__file__).resolve().parents[2] / "data/results"
 
 for i, c in enumerate(CONFIGS, 1):
     print(f"\n{'═'*60}")

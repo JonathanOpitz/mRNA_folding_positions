@@ -22,9 +22,10 @@ import matplotlib.pyplot as plt
 from Bio import SeqIO
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-DATA_DIR = Path("/Users/jonathanopitz/Desktop/Master/data/ribo_counts")
-GENES_DIR = Path("/Users/jonathanopitz/Desktop/Master/data/genes")
-ISOFORM_JSON = Path("/Users/jonathanopitz/Desktop/Master/isoform_selection.json")
+_BASE        = Path(__file__).resolve().parents[2]
+DATA_DIR     = _BASE / "data/ribo_counts"
+GENES_DIR    = _BASE / "data/genes"
+ISOFORM_JSON = _BASE / "isoform_selection.json"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 SEED = 42

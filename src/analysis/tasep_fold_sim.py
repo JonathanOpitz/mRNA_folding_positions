@@ -500,8 +500,10 @@ def main():
     parser.add_argument("run_a", type=Path, help="JSON from γ=0 baseline")
     parser.add_argument("run_b", type=Path, help="JSON from γ>0")
     parser.add_argument("--wt_dir",
-                        default="/Users/jonathanopitz/Desktop/Master/data/ribo_counts",
-                        type=Path)
+                        default=None,
+                        type=Path,
+                        help="Dir with *_with_folddemand.csv files "
+                             "(default: <repo_root>/data/ribo_counts)")
     parser.add_argument("--n_simulations", type=int, default=N_SIMULATIONS_DEFAULT,
                         help=f"Number of stochastic reps (default {N_SIMULATIONS_DEFAULT})")
     parser.add_argument("--sim_time", type=float, default=500.0,
@@ -509,6 +511,8 @@ def main():
     parser.add_argument("--plot", action='store_true',
                         help="Save 4-panel plot alongside run_b JSON")
     args = parser.parse_args()
+    if args.wt_dir is None:
+        args.wt_dir = Path(__file__).resolve().parents[2] / "data/ribo_counts"
 
     runA = load_run(args.run_a)
     runB = load_run(args.run_b)

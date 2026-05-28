@@ -17,7 +17,7 @@ from pathlib import Path
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
-BASE_DIR          = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR          = Path(__file__).resolve().parents[2]
 SIMULATED_DIR     = BASE_DIR / "data/ribo_counts_simulated"
 AF_OUT_DIR        = BASE_DIR / "data/alphafold_results"
 ISOFORM_JSON      = BASE_DIR / "isoform_selection.json"

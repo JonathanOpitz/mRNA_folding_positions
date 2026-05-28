@@ -38,7 +38,7 @@ from torch_geometric.loader import DataLoader
 from torch_geometric.nn import GATv2Conv
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-BASE_DIR     = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR     = Path(__file__).resolve().parents[2]
 WT_DIR       = BASE_DIR / "data/ribo_counts"
 SIM_DIR      = BASE_DIR / "data/ribo_counts_simulated"
 GENES_DIR    = BASE_DIR / "data/genes"

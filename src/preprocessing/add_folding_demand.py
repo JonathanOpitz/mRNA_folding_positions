@@ -42,7 +42,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger(__name__)
 
 # ─── CONFIG ───────────────────────────────────────────────────────────────────
-BASE_DIR = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR = Path(__file__).resolve().parents[2]
 DIRS_TO_PROCESS = [
     BASE_DIR / "data/ribo_counts",
     BASE_DIR / "data/ribo_counts_simulated",

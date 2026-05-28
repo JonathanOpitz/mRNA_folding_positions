@@ -25,7 +25,7 @@ from pathlib import Path
 from Bio.Seq import Seq
 
 # ── Paths ──────────────────────────────────────────────────────────
-BASE         = Path("/Users/jonathanopitz/Desktop/Master")
+BASE         = Path(__file__).resolve().parents[2]
 ISOFORM_JSON = BASE / "isoform_selection.json"
 GENES_DIR    = BASE / "data/genes"
 OPT_DIR      = BASE / "data/genes_gemorna"

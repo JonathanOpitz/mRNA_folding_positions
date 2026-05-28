@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 log = logging.getLogger(__name__)
 
 # ─── Paths ────────────────────────────────────────────────────────────────────
-BASE         = Path("/Users/jonathanopitz/Desktop/Master")
+BASE         = Path(__file__).resolve().parents[2]
 ISOFORM_JSON = BASE / "isoform_selection.json"
 FASTQ        = BASE / "data/ribo_fastq/SRR10072555.fastq"
 GENES_DIR    = BASE / "data/genes"

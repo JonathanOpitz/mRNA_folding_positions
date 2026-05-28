@@ -24,7 +24,7 @@ import matplotlib.gridspec as gridspec
 import sys
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-BASE_DIR    = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR    = Path(__file__).resolve().parents[2]
 RESULTS_DIR = BASE_DIR / "data/ribo_counts"
 OUT_DIR     = BASE_DIR / "data/analysis"
 

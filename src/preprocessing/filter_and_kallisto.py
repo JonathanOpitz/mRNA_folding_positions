@@ -23,7 +23,7 @@ import subprocess
 import pandas as pd
 from typing import Dict, List, Tuple
 
-BASE_DIR = Path("/Users/jonathanopitz/Desktop/Master")
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 GENES = {
     g.upper() for g in [

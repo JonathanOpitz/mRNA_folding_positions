@@ -46,19 +46,26 @@ _DEFAULT_NT: dict = {
 # ─── Path discovery ───────────────────────────────────────────────────────────
 
 def get_rnaplfold_path() -> str:
-    """Locate the RNAplfold binary, checking conda envs and system paths."""
+    """Locate the RNAplfold binary.
+
+    Resolution order:
+    1. RNAPLFOLD_BIN environment variable
+    2. PATH via shutil.which
+    3. Common install locations (homebrew, system)
+    """
+    env_override = os.environ.get("RNAPLFOLD_BIN")
+    if env_override:
+        return env_override
     candidates = [
         shutil.which("RNAplfold"),
-        "/Users/jonathanopitz/miniconda3/envs/rna_env/bin/RNAplfold",
         "/opt/homebrew/bin/RNAplfold",
         "/usr/local/bin/RNAplfold",
-        "/Users/jonathanopitz/Desktop/Master/folding/bin/RNAplfold",
     ]
     for p in candidates:
         if p and Path(p).is_file():
             return p
     raise FileNotFoundError(
-        "RNAplfold not found. Verify installation with 'which RNAplfold'."
+        "RNAplfold not found. Install ViennaRNA or set RNAPLFOLD_BIN=/path/to/RNAplfold."
     )
 
 
