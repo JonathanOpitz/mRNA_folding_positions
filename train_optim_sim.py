@@ -786,7 +786,7 @@ os.makedirs(os.path.join(base_dir, "data", "cds"), exist_ok=True)
 #     with open(os.path.join(base_dir, "data", "cds", n), 'w') as f:
 #         f.write(args.cds)
 
-args.model_config_g = base_dir + "/model_config.py"
+args.model_config_g = base_dir + "/model_config.json"
 args.save_dir = "./logs/"
 args.result_dir = "./samples/"
 args.model_config_s = base_dir + "/score_model/model_config.json"
@@ -805,7 +805,7 @@ data_gen_optim["mask_optim_dist"] = {}
 data_gen_optim["seq_optim_best"] = {}
 data_gen_optim["optim_iteration_logs"] = {}
 
-model_config = json.loads(open(base_dir + "/model_config.py", mode="r").read())[
+model_config = json.loads(open(base_dir + "/model_config.json", mode="r").read())[
     "training"
 ]
 model_config["data_folder"] = base_dir + "/data/cds/"

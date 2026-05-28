@@ -905,7 +905,7 @@ def main():
     GNN_UPDATE_EVERY = args.gnn_update_every
 
     os.makedirs(os.path.join(base_dir, "data", "cds"), exist_ok=True)
-    args.model_config_g = base_dir + "/model_config.py"
+    args.model_config_g = base_dir + "/model_config.json"
     args.save_dir       = "./logs/"
     args.result_dir     = "./samples/"
     args.model_config_s = base_dir + "/score_model/model_config.json"
@@ -917,7 +917,7 @@ def main():
         "mask_optim_dist", "seq_optim_best", "optim_iteration_logs",
     ]}
 
-    model_config = json.loads(open(base_dir + "/model_config.py").read())["training"]
+    model_config = json.loads(open(base_dir + "/model_config.json").read())["training"]
     model_config["data_folder"]     = base_dir + "/data/cds/"
     model_config["weight_mfe"]      = args.mfe_weight
     model_config["num_optim"]       = args.optim_epoch
