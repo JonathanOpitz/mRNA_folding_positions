@@ -139,7 +139,7 @@ print(f"[Saved] {OUT_DIR / 'dose_response.png'}")
 # ═══════════════════════════════════════════════════════════════════════════════
 print("\nBuilding effect_vs_density.png ...")
 
-# Rand-Anteil fuer die Achsen (groesser = mehr Platz, Punkte/Labels kleben nicht am Rand)
+# Axis margin fraction — larger values add padding so points/labels don't touch the border
 X_MARGIN = 0.15
 Y_MARGIN = 0.15
 
@@ -152,14 +152,14 @@ def plot_panel(ax, df, gamma_label):
     ys = d.values
     mask = ~np.isnan(xs) & ~np.isnan(ys)
 
-    # Punkte zeichnen
+    # Draw points
     for cat, color in CAT_COLORS.items():
         sub_mask = mask & (df['category'] == cat)
         ax.scatter(xs[sub_mask], ys[sub_mask],
                    c=color, s=120, alpha=0.85,
                    edgecolors='black', linewidths=0.7)
 
-    # Achsen-Limits ZUERST setzen, damit adjustText die Labels drin haelt
+    # Set axis limits before adjustText so labels stay within bounds
     x_min, x_max = xs[mask].min(), xs[mask].max()
     y_min, y_max = ys[mask].min(), ys[mask].max()
     xr = (x_max - x_min) or 1.0
@@ -176,7 +176,7 @@ def plot_panel(ax, df, gamma_label):
         ]
         adjust_text(
             texts,
-            x=xs[mask], y=ys[mask],   # Punkte, die vermieden werden sollen
+            x=xs[mask], y=ys[mask],   # repel away from these points
             ax=ax,
             arrowprops=dict(arrowstyle='-', color='gray', lw=0.5),
             expand_points=(1.4, 1.4),

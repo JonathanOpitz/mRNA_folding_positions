@@ -782,9 +782,6 @@ args = parser.parse_args()
 print(args)
 
 os.makedirs(os.path.join(base_dir, "data", "cds"), exist_ok=True)
-# for n in ["train_data.txt", "ld_data.txt"]:
-#     with open(os.path.join(base_dir, "data", "cds", n), 'w') as f:
-#         f.write(args.cds)
 
 args.model_config_g = base_dir + "/model_config.json"
 args.save_dir = "./logs/"

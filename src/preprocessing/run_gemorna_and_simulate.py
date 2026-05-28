@@ -517,7 +517,7 @@ def main():
         print()
 
     print(f'{"="*65}')
-    print(f'Fertig: {len(success)}/{len(genes_ok)} erfolgreich')
+    print(f'Done: {len(success)}/{len(genes_ok)} successful')
     if failed:
         print('Fehlgeschlagen:')
         for g, r in failed:

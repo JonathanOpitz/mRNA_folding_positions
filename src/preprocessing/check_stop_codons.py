@@ -38,7 +38,7 @@ def gene_matches(description: str, gene: str) -> bool:
     """
     desc = description.upper()
     gene = gene.upper()
-    # Suche nach (GENE) oder [GENE] oder Leerzeichen-begrenzt
+    # Match (GENE), [GENE], or whitespace-delimited
     for pattern in [f"({gene})", f"[{gene}]", f" {gene},", f" {gene} ", f" {gene})"]:
         if pattern in desc:
             return True
@@ -75,7 +75,7 @@ def extract_protein(seq: str) -> dict:
             "protein": protein_full,
         }
 
-    # CDS-Protein = alles VOR dem ersten Stop
+    # CDS protein = everything before the first stop
     protein_cds = protein_full[:first_stop_idx]
 
     # Terminal Stop Codon bestimmen
