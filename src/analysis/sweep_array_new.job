@@ -1,0 +1,90 @@
+cat > sweep_array.job <<'JOBEOF'
+#!/bin/bash
+#SBATCH --job-name=mrna_sweep
+#SBATCH --output=logs/sweep_%A_%a.out
+#SBATCH --error=logs/sweep_%A_%a.err
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=8
+#SBATCH --mem=24G
+#SBATCH --time=08:00:00
+#SBATCH --partition=scavenge
+#SBATCH --account=researchers
+#SBATCH --gres=gpu:1
+#SBATCH --requeue
+#SBATCH --array=1-57%2
+#SBATCH --exclude=desktop[1-9],desktop12,desktop15,desktop16,cn16,cn17
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Project and Environment paths
+PROJECT_DIR="$HOME/mRNA_folding_positions"
+ENV_PATH="/home/opit/.conda/envs/ribo"
+ENV_PYTHON="$ENV_PATH/bin/python"
+
+echo "=== Slurm $SLURM_JOB_ID  array=$SLURM_ARRAY_TASK_ID  on $(hostname) ==="
+date
+
+# 1. Load necessary modules (keeps the environment clean)
+module purge
+module load CUDA/12.1.1
+module load NCCL/2.18.3-GCCcore-12.3.0-CUDA-12.1.1
+module load Miniconda3/25.5.1-1
+
+# 2. Source Conda (makes the 'conda' command available inside the script)
+source /opt/itu/easybuild/software/Miniconda3/25.5.1-1/etc/profile.d/conda.sh
+
+# 3. Activate the environment on the Compute Node
+conda activate "$ENV_PATH"
+
+cd "$PROJECT_DIR"
+
+# Verify GPU availability for the logs
+$ENV_PYTHON -c "import torch; print(f'torch version: {torch.__version__}'); print(f'GPU available: {torch.cuda.is_available()}')"
+
+# Read parameters from configs.txt based on the Array Task ID
+LINE=$(sed -n "${SLURM_ARRAY_TASK_ID}p" configs.txt)
+[ -z "$LINE" ] && { echo "ERROR: no config at line $SLURM_ARRAY_TASK_ID"; exit 1; }
+
+read -r GENE FOLD_GAMMA MFE_WEIGHT EPOCHS <<< "$LINE"
+echo "Config: gene=$GENE  fold_gamma=$FOLD_GAMMA  mfe_weight=$MFE_WEIGHT  epochs=$EPOCHS"
+
+# Check if output already exists to avoid redundant computation
+FOLD_TAG=$(echo "fold${FOLD_GAMMA}" | tr -d '.')
+MFE_TAG=$(echo "mfe${MFE_WEIGHT}" | tr -d '.')
+TAG="${GENE}_${FOLD_TAG}_${MFE_TAG}_HEK293T_ep${EPOCHS}"
+OUTPUT_JSON="data/optimized/${TAG}_results.json"
+
+if [ -f "$OUTPUT_JSON" ] && [ "$(wc -c < "$OUTPUT_JSON")" -gt 100 ]; then
+    echo "✓ SKIPPED — already exists: $OUTPUT_JSON"
+    exit 0
+fi
+
+# Locate FASTA file
+FASTA=$(ls -S data/genes/${GENE}_*.fasta 2>/dev/null | head -1)
+[ -z "$FASTA" ] && { echo "ERROR: no FASTA for $GENE"; exit 1; }
+
+CDS_SEQ=$(grep -v ">" "$FASTA" | tr -d '\n' | tr 'a-z' 'A-Z' | tr 'U' 'T')
+echo "FASTA: $FASTA ($(echo -n "$CDS_SEQ" | wc -c) nt)"
+
+echo
+echo "=== Running ribodecode_with_fold_penalty.py ==="
+$ENV_PYTHON ribodecode_with_fold_penalty.py \
+    --cds "$GENE" \
+    --cds_seq "$CDS_SEQ" \
+    --env HEK293T \
+    --mfe_weight "$MFE_WEIGHT" \
+    --optim_epoch "$EPOCHS" \
+    --alpha 100 \
+    --beta 100 \
+    --fold_gamma "$FOLD_GAMMA" \
+    --gnn_update_every 5
+
+EXIT=$?
+echo
+echo "Exit: $EXIT  Finished: $(date)"
+[ -f "$OUTPUT_JSON" ] && echo "✓ Output: $OUTPUT_JSON" || echo "✗ No output"
+
+exit $EXIT
+JOBEOF
