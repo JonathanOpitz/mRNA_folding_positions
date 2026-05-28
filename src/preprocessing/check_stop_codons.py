@@ -10,10 +10,11 @@ from Bio import SeqIO
 from Bio.Seq import Seq
 import json
 
-# ─── Konfiguration ────────────────────────────────────────────────────────────
-MANE_FILE = Path("/Users/jonathanopitz/Desktop/Master/data/genes/MANE.GRCh38.v1.5.refseq_rna.fna")
-OUTPUT_DIR = Path("/Users/jonathanopitz/Desktop/Master/data/proteins")
-JSON_OUT   = Path("/Users/jonathanopitz/Desktop/Master/data/stop_codon_check_all.json")
+# ─── Paths ────────────────────────────────────────────────────────────────────
+BASE     = Path(__file__).resolve().parents[2]
+MANE_FILE = BASE / "data/genes/MANE.GRCh38.v1.5.refseq_rna.fna"
+OUTPUT_DIR = BASE / "data/proteins"
+JSON_OUT   = BASE / "data/stop_codon_check_all.json"
 
 GENES = [
     "GAPDH", "LDHA", "LDHB", "ENO1", "PKM", "ALDOA", "PGK1", "IDH1", "IDH2", "MDH2",
